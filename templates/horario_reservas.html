@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Horario Semanal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .reserva-block {
+            background-color: #17a2b8;
+            color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            position: relative;
+            transition: background-color 0.3s;
+            cursor: default;
+        }
+        .reserva-block:hover {
+            background-color: #138496;
+        }
+        .btn-detalles {
+            display: inline-block;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h3 class="mb-4">Horario Semanal - Rol: {% if rol == 'cliente' %}Cliente{% elif rol == 'personal' %}Personal{% elif rol == 'administrador' %}Administrador{% endif %}</h3>
+    <a href="../dashboard" class="btn btn-secondary mb-3">Volver al panel</a>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="estado" class="form-label">Estado de reserva</label>
+            <select name="estado" id="estado" class="form-select">
+                <option value="">Todos</option>
+                <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="asignada" {% if filtro_estado == 'asignada' %}selected{% endif %}>Asignada</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="semana" class="form-label">Semana (fecha base)</label>
+            <input type="date" id="semana" name="semana" value="{{ filtro_semana }}" class="form-control">
+        </div>
+        {% if rol == 'administrador' %}
+        <div class="col-md-3">
+            <label for="personal" class="form-label">Filtrar por personal</label>
+            <select name="personal" id="personal" class="form-select">
+                <option value="">Todos</option>
+                {% for p in lista_personal %}
+                    <option value="{{ p.id }}" {% if filtro_personal == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary w-100">Aplicar filtros</button>
+        </div>
+    </form>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Hora</th>
+                {% for dia in dias_semana %}
+                    <th>{{ dia.nombre_es }}<br>{{ dia.fecha|date:"d/m/Y" }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if horario_list %}
+                {% for fila in horario_list %}
+                    <tr>
+                        <td><strong>{{ fila.hora }}</strong></td>
+                        {% for reservas in fila.reservas_por_dia %}
+                            <td>
+                                {% for reserva in reservas %}
+                                    <div class="reserva-block">
+                                        <div><strong>Dirección:</strong> {{ reserva.direccion }}</div>
+
+                                        {% if rol == 'cliente' %}
+                                            {% with asignacion=reserva.asignacion_set.first %}
+                                                <div><strong>Personal:</strong>
+                                                    {% if asignacion %}
+                                                        {{ asignacion.usuario.nombre }}
+                                                    {% else %}
+                                                        <em>Sin asignar</em>
+                                                    {% endif %}
+                                                </div>
+                                            {% endwith %}
+                                        {% elif rol == 'personal' %}
+                                            <div><strong>Cliente:</strong> {{ reserva.usuario.nombre }}</div>
+                                        {% elif rol == 'administrador' %}
+                                            <div><strong>Cliente:</strong> {{ reserva.usuario.nombre }}</div>
+                                            {% with asignacion=reserva.asignacion_set.first %}
+                                                <div><strong>Asignado a:</strong>
+                                                    {% if asignacion %}
+                                                        {{ asignacion.usuario.nombre }}
+                                                    {% else %}
+                                                        <em>Sin asignar</em>
+                                                    {% endif %}
+                                                </div>
+                                            {% endwith %}
+                                        {% endif %}
+
+                                        <a href="{% url 'detalle_reserva' reserva.id %}?origen=horario_reservas" class="btn btn-sm btn-light btn-detalles">Ver detalles</a>
+                                    </div>
+                                {% empty %}
+                                    —
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="8">No hay reservas para esta semana.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
