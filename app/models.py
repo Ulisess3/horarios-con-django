@@ -18,12 +18,14 @@ class Reserva(models.Model):
     ]
     fecha_reserva = models.DateField()
     hora_reserva = models.TimeField(default="08:00")
-    direccion = models.CharField(max_length=100)
+    direccion = models.CharField(max_length=250)
     tipo_ubicacion = models.CharField(
         max_length=20,
         choices=TIPO_UBICACION_CHOICES,
         default='residencia'
     )
+    latitud = models.FloatField(null=True, blank=True)
+    longitud = models.FloatField(null=True, blank=True)
     estado = models.CharField(max_length=10)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
 

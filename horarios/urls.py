@@ -47,10 +47,12 @@ urlpatterns = [
     path('reasignar_pendientes/', views.reasignar_pendientes),
     path('asignar_manual/', views.asignar_manual),
     path('cambiar_contraseña/', views.cambiar_contraseña),
+    path('mapa_asignaciones/', views.mapa_asignaciones),
+    path('ver_historial/', views.ver_historial, name='ver_historial'),
 
     path('editar_perfil/<int:usuario_id>/', views.editar_perfil, name='editar_usuario'),
     path('inhabilitar_usuario/<int:usuario_id>/', views.inhabilitar_usuario, name='inhabilitar_usuario'),
     path('habilitar_usuario/<int:usuario_id>/', views.habilitar_usuario, name='habilitar_usuario'),
     path('cambiar_contraseña/<int:usuario_id>/', views.cambiar_contraseña, name='cambiar_contraseña_admin'),
-
+    path('terminos/', views.terminos_condiciones, name='terminos'),
 ]

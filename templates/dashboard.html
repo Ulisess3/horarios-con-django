@@ -35,6 +35,7 @@
                         <a href="../asignaciones_pendientes" class="btn btn-primary me-2">Mis pendientes</a> 
                         <a href="../asignaciones_completadas" class="btn btn-warning me-2">Mis asignaciones completadas</a> 
                         <a href="../horario_reservas" class="btn btn-secondary me-2">Horario reservas</a> 
+                        <a href="../mapa_asignaciones" class="btn btn-outline-secondary me-2">Mapa</a>
                     </div>
 
                 {% elif rol == 'administrador' %}
@@ -42,8 +43,12 @@
                     <div class="d-flex justify-content-center">
                         <a href="../asignar_manual" class="btn btn-outline-primary me-2">Asignar tareas manualmente</a>
                         <a href="../gestionar_usuarios" class="btn btn-outline-primary me-2">Gestionar Usuarios</a>
-                        <a href="../horario_reservas" class="btn btn-outline-secondary">Ver Horarios</a>
-                        <a href="../reasignar_pendientes" class="btn btn-outline-secondary">Auto asignar</a>
+                        <a href="../horario_reservas" class="btn btn-outline-primary me-2">Ver Horarios</a>
+                        <a href="../mapa_asignaciones" class="btn btn-outline-primary me-2">Mapa General</a>
+                        <a href="../reasignar_pendientes" class="btn btn-outline-primary">Auto asignar</a>
+                    </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a href="../ver_historial" class="btn btn-outline-secondary">Registros historicos</a>
                     </div>
 
                 {% else %}

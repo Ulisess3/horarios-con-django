@@ -165,6 +165,8 @@ def crear_reserva(request):
         tipo_ubicacion = request.POST['tipo_ubicacion']
         fecha = request.POST['fecha']
         hora = request.POST['hora_reserva']
+        lat = request.POST.get('latitud')
+        lon = request.POST.get('longitud')
 
         usuario = Usuario.objects.get(id=request.session['usuario_id'])
 
@@ -182,7 +184,9 @@ def crear_reserva(request):
                 direccion=direccion,
                 tipo_ubicacion=tipo_ubicacion,
                 estado='pendiente',
-                usuario=usuario
+                usuario=usuario,
+                latitud=lat,
+                longitud=lon
             )
 
             Asignacion.objects.create(
@@ -227,7 +231,9 @@ def crear_reserva(request):
                         direccion=direccion,
                         tipo_ubicacion=tipo_ubicacion,
                         estado='pendiente',
-                        usuario=usuario
+                        usuario=usuario,
+                        latitud=lat,
+                        longitud=lon
                     )
 
                     asign.delete()
@@ -253,14 +259,16 @@ def crear_reserva(request):
 
                     messages.success(request, f'Reserva de oficina asignada a {personal_a_reasignar.nombre}. La residencia fue puesta en espera.')
                     return redirect('../reservas')
-
+        
         reserva = Reserva.objects.create(
             fecha_reserva=fecha_reserva,
             hora_reserva=hora_reserva,
             direccion=direccion,
             tipo_ubicacion=tipo_ubicacion,
             estado='pendiente',
-            usuario=usuario
+            usuario=usuario,
+            latitud=lat,
+            longitud=lon
         )
         send_mail(
             'Reserva creada - pendiente',
@@ -757,3 +765,67 @@ def cambiar_contraseña(request, usuario_id=None):
     else:
         origen = request.GET.get('origen', '')
         return render(request, 'cambiar_contraseña.html', {'origen': origen})
+    
+def mapa_asignaciones(request):
+    rol = request.session.get('usuario_rol')
+    usuario_id = request.session.get('usuario_id')
+
+    if not rol or not usuario_id:
+        return redirect('../login')
+
+    if rol == 'personal':
+        asignaciones = Asignacion.objects.filter(
+            usuario_id=usuario_id,
+            reserva__estado__in=['pendiente', 'asignada']
+        ).select_related('reserva').order_by('reserva__fecha_reserva', 'reserva__hora_reserva')
+
+    elif rol == 'administrador':
+        asignaciones = Asignacion.objects.filter(
+            reserva__estado__in=['pendiente', 'asignada']
+        ).select_related('reserva', 'usuario', 'reserva__usuario').order_by('reserva__fecha_reserva', 'reserva__hora_reserva')
+    else:
+        return redirect('../dashboard')
+
+    return render(request, 'mapa_asignaciones.html', {
+        'asignaciones': asignaciones,
+        'rol': rol
+    })
+
+def ver_historial(request):
+    if request.session.get('usuario_rol') != 'administrador':
+        return redirect('../dashboard')
+
+    historial = HistorialTarea.objects.select_related('asignacion__usuario', 'asignacion__reserva')
+
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    personal_id = request.GET.get('personal')
+    cliente_id = request.GET.get('cliente')
+
+    if fecha_desde:
+        historial = historial.filter(hora_inicio__date__gte=fecha_desde)
+    if fecha_hasta:
+        historial = historial.filter(hora_fin__date__lte=fecha_hasta)
+    if personal_id:
+        historial = historial.filter(asignacion__usuario__id=personal_id)
+    if cliente_id:
+        historial = historial.filter(asignacion__reserva__usuario__id=cliente_id)
+
+    personal = Usuario.objects.filter(rol='personal')
+    clientes = Usuario.objects.filter(rol='cliente')
+
+    contexto = {
+        'historial': historial.order_by('-hora_inicio'),
+        'filtros': {
+            'fecha_desde': fecha_desde or '',
+            'fecha_hasta': fecha_hasta or '',
+            'personal_id': int(personal_id) if personal_id else '',
+            'cliente_id': int(cliente_id) if cliente_id else ''
+        },
+        'personal': personal,
+        'clientes': clientes
+    }
+    return render(request, 'ver_historial.html', contexto)
+
+def terminos_condiciones(request):
+    return render(request, 'terminos_condiciones.html')
